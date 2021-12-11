@@ -1,6 +1,6 @@
 ---
 title: "AWS コンピューティング基礎"
-date: 2021-12-09T00:00:00+09:00
+date: 2021-12-09
 slug: basic-computing
 categories: [basic]
 tags: [EC2, ECS, ELB, Lambda]

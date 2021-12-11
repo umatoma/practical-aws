@@ -1,6 +1,6 @@
 ---
 title: "AWS ネットワーク基礎"
-date: 2021-12-08T00:00:00+09:00
+date: 2021-12-08
 slug: basic-network
 categories: [basic]
 tags: [VPC]

@@ -1,15 +1,14 @@
 baseurl: https://practical-aws.dev
-languageCode: ja-jp
+languageCode: ja-JP
 theme: hugo-theme-stack
 paginate: 5
 title: AWS 実践入門
 
-# disqusShortname: hugo-theme-stack
-
-googleAnalytics:
-
+baseURL: https://practical-aws.dev
+timezone: Asia/Tokyo
 DefaultContentLanguage: ja
 hasCJKLanguage: true
+googleAnalytics:
 
 permalinks:
     post: /p/:slug/
