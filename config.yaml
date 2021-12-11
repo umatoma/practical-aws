@@ -48,95 +48,20 @@ params:
 
     comments:
         enabled: false
-        # provider: disqus
-
-        disqusjs:
-            shortname:
-            apiUrl:
-            apiKey:
-            admin:
-            adminLabel:
-
-        utterances:
-            repo:
-            issueTerm: pathname
-            label:
-
-        remark42:
-            host:
-            site:
-            locale:
-
-        vssue:
-            platform:
-            owner:
-            repo:
-            clientId:
-            clientSecret:
-            autoCreateIssue: false
-
-        # Waline client configuration see: https://waline.js.org/en/reference/client.html
-        waline:
-            serverURL:
-            lang:
-            visitor:
-            avatar:
-            emoji:
-                - https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo
-            requiredMeta:
-                - name
-                - email
-                - url
-            placeholder:
-            locale:
-                admin: Admin
-
-        twikoo:
-            envId:
-            region:
-            path:
-            lang:
-
-        giscus:
-            repo:
-            repoID:
-            category:
-            categoryID:
-            mapping:
-            lightTheme:
-            darkTheme:
-            reactionsEnabled: 1
-            emitMetadata: 0
-
-        gitalk:
-            owner: 
-            admin:  
-            repo: 
-            clientID: 
-            clientSecret: 
-        
-        cusdis:
-            host: 
-            id: 
 
     widgets:
         enabled:
             - search
             - archives
             - tag-cloud
-
         archives:
             limit: 5
-
         tagCloud:
             limit: 10
 
     opengraph:
         twitter:
-            # Your Twitter username
             site: _umatoma
-
-            # Available values: summary, summary_large_image
             card: summary_large_image
 
     defaultImage:
@@ -168,17 +93,19 @@ menu:
           url: /
           weight: -100
           params:
-              ### For demonstration purpose, the home link will be open in a new tab
-              newTab: true
               icon: home
-    
+        - identifier: about
+          name: About
+          url: /about
+          weight: -90
+          params:
+              icon: user
     social:
         - identifier: github
           name: umatoma
           url: https://github.com/umatoma
           params:
             icon: brand-github
-            
         - identifier: twitter
           name: umatoma
           url: https://twitter.com/_umatoma
@@ -192,7 +119,6 @@ related:
     indices:
         - name: tags
           weight: 100
-
         - name: categories
           weight: 200
 
