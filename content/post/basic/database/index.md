@@ -8,7 +8,7 @@ image: basic-database.jpg
 draft: true
 ---
 
-## コンピューティング基礎
+## データベース基礎
 
 ここでは、RDS・DynamoDBといった、アプリケーションで扱うデータを保存する、データベース部分の知識を整理します。
 
