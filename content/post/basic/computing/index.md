@@ -3,7 +3,7 @@ title: "AWS コンピューティング基礎"
 date: 2021-12-09
 slug: basic-computing
 categories: [basic]
-tags: [EC2, ECS, ELB, Lambda]
+tags: [EC2, ECS, ELB, Lambda, CloudWatch]
 image: basic-computing.jpg
 draft: true
 ---
@@ -77,6 +77,17 @@ API Gateway・S3・DynamoDBといったサービスの処理をイベントと�
 なので、画像のサムネイル作成・メール送信といった、一定時間内で終わるけど非同期で処理したい、といった場合に活用すると良いでしょう。
 
 ![](group-basic-lambda.png)
+
+
+## CloudWatch Logs
+
+「CloudWatch Logs」とは、ログ管理サービスです。
+様々なリソースのログを保存・閲覧・モニタリングできます。
+
+EC2・ECS・Lambdaなどを始めとした様々なサービス・リソースのログを、CloudWatch Logsへ保存できます。
+また、ログの内容に応じてアラームを設定し、不具合などを検知することもできます。
+
+![](group-basic-logs.png)
 
 
 ## まとめ
