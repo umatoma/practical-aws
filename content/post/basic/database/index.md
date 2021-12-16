@@ -5,7 +5,7 @@ slug: basic-database
 categories: [basic]
 tags: [RDS, DynamoDB, ElasticCache, S3]
 image: basic-database.jpg
-draft: true
+draft: false
 ---
 
 ## データベース基礎

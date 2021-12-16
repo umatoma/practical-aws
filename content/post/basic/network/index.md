@@ -5,7 +5,7 @@ slug: basic-network
 categories: [basic]
 tags: [VPC]
 image: basic-network.jpg
-draft: true
+draft: false
 ---
 
 ## AWS 実践入門

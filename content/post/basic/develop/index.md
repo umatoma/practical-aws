@@ -5,7 +5,7 @@ slug: basic-develop
 categories: [basic]
 tags: [CodePipeline, GitHubActions, CloudeFormation, Terraform, CDK, Copilot]
 image: basic-develop.jpg
-draft: true
+draft: false
 ---
 
 ## 開発ツール基礎

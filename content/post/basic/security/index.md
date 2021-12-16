@@ -5,7 +5,7 @@ slug: basic-security
 categories: [basic]
 tags: [IAM]
 image: basic-security.jpg
-draft: true
+draft: false
 ---
 
 ## セキュリティ基礎

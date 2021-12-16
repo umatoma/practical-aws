@@ -1,7 +1,7 @@
 ---
 title: "サーバーレス"
 slug: serverless
-image: category-serverless.jpg
+image: img/category-serverless.jpg
 style:
     background: "#d946ef"
     color: "#fff"

@@ -5,7 +5,7 @@ slug: basic-computing
 categories: [basic]
 tags: [EC2, ECS, ELB, Lambda, CloudWatch]
 image: basic-computing.jpg
-draft: true
+draft: false
 ---
 
 ## コンピューティング基礎
