@@ -1,7 +1,7 @@
 baseurl: https://practical-aws.dev
 languageCode: ja-JP
 theme: hugo-theme-stack
-paginate: 5
+paginate: 10
 title: AWS 実践入門
 
 baseURL: https://practical-aws.dev
@@ -54,7 +54,7 @@ params:
             - archives
             - tag-cloud
         archives:
-            limit: 5
+            limit: 7
         tagCloud:
             limit: 10
 
