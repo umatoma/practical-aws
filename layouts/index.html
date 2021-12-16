@@ -10,6 +10,9 @@
             {{ with $.Site.GetPage "categories/basic" }}
                 {{ partial "article-list/tile" (dict "context" . "size" "250x150" "Type" "taxonomy") }}
             {{ end }}
+            {{ with $.Site.GetPage "categories/container" }}
+                {{ partial "article-list/tile" (dict "context" . "size" "250x150" "Type" "taxonomy") }}
+            {{ end }}
         </div>
     </div>
 
