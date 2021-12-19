@@ -28,3 +28,8 @@ resources
 
 assets/jsconfig.json
 .DS_Store
+
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
