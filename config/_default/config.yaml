@@ -8,7 +8,6 @@ baseURL: https://practical-aws.dev
 timezone: Asia/Tokyo
 DefaultContentLanguage: ja
 hasCJKLanguage: true
-googleAnalytics: G-667K3Q86B7
 
 permalinks:
     post: /p/:slug/
@@ -65,9 +64,9 @@ params:
 
     defaultImage:
         opengraph:
-            enabled: false
-            local: false
-            src:
+            enabled: true
+            local: true
+            src: img/common-og-image.png
 
     colorScheme:
         # Display toggle
