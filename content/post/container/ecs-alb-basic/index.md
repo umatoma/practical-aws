@@ -4,7 +4,7 @@ date: 2021-12-16
 slug: container-ecs-alb-basic
 categories: [container]
 tags: [ECS, ELB, ECR, Terraform]
-image: img/category-container.jpg
+image: group-container-ecs-alb-basic-architecture.png
 draft: false
 ---
 
