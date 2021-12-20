@@ -9,3 +9,15 @@
 
 [[plugins]]
     package = "netlify-plugin-hugo-cache-resources"
+
+[[redirects]]
+    from = "https://practical-aws.netlify.app/"
+    to = "https://practical-aws.dev"
+    status = 301
+    force = true
+
+[[redirects]]
+    from = "https://www.practical-aws.dev"
+    to = "https://practical-aws.dev"
+    status = 301
+    force = true
