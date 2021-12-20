@@ -8,7 +8,7 @@ baseURL: https://practical-aws.dev
 timezone: Asia/Tokyo
 DefaultContentLanguage: ja
 hasCJKLanguage: true
-googleAnalytics:
+googleAnalytics: G-667K3Q86B7
 
 permalinks:
     post: /p/:slug/
