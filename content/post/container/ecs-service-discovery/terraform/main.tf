@@ -128,6 +128,36 @@ resource "aws_security_group_rule" "app_to_any" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
+##################################################
+# Service Discovery
+##################################################
+
+resource "aws_service_discovery_private_dns_namespace" "this" {
+  name = "${local.app_name}.local"
+  description = "${local.app_name}"
+  vpc = aws_vpc.this.id
+}
+
+resource "aws_service_discovery_service" "myservice" {
+  for_each = toset(["a", "b"])
+  name = "myservice-${each.key}"
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.this.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl = 10
+      type = "A"
+    }
+    dns_records {
+      ttl = 10
+      type = "SRV"
+    }
+  }
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
 ####################################################
 # ECS Cluster
 ####################################################
@@ -159,36 +189,6 @@ resource "aws_iam_role" "ecs_task_exec" {
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
   ]
-}
-
-##################################################
-# Service Discovery
-##################################################
-
-resource "aws_service_discovery_private_dns_namespace" "this" {
-  name = "${local.app_name}.local"
-  description = "${local.app_name}"
-  vpc = aws_vpc.this.id
-}
-
-resource "aws_service_discovery_service" "myservice" {
-  for_each = toset(["a", "b"])
-  name = "myservice-${each.key}"
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.this.id
-    routing_policy = "MULTIVALUE"
-    dns_records {
-      ttl = 10
-      type = "A"
-    }
-    dns_records {
-      ttl = 10
-      type = "SRV"
-    }
-  }
-  health_check_custom_config {
-    failure_threshold = 1
-  }
 }
 
 ####################################################
