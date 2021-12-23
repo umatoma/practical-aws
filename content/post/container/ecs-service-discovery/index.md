@@ -1,11 +1,11 @@
 ---
 title: "ECS Service Discoveryを使ったService間連携"
-date: 2021-12-22
+date: 2021-12-23
 slug: ecs-service-discovery
 categories: [container]
 tags: [ECS, Terraform]
 image: group-container-ecs-service-discovery-architecture.png
-draft: true
+draft: false
 ---
 
 ## 作成するシステム構成
@@ -130,6 +130,8 @@ resource "aws_route_table_association" "public_2_to_ig" {
 }
 ```
 
+これで、ネットワークの構築は完了です。
+
 
 ## セキュリティグループ構築
 
@@ -186,19 +188,296 @@ resource "aws_security_group_rule" "app_to_any" {
 }
 ```
 
-## Service Discovery 構築
+これで、セキュリティグループの構築は完了です。
 
-TBD
+
+## Hosted Zone 構築
+
+つぎに、Hosted Zoneの構築を進めます。
+
+ECS Service Discoveryとは、Route53にコンテナのIPに対応するレコードを登録する仕組みです。
+ここでは、Service Discoveryで使用するドメイン名に対応する、Hosted Zoneを作成します。
+
+```tf
+##################################################
+# Hosted Zone
+##################################################
+
+resource "aws_service_discovery_private_dns_namespace" "this" {
+  name = "${local.app_name}.local"
+  description = "${local.app_name}"
+  vpc = aws_vpc.this.id
+}
+```
+
+![](hosted-zone.png)
+
+これで、Hosted Zoneの構築は完了です。
+
+
+## アプリケーション登録
+
+つぎに、ECS Service Discoveryの動作確認を行うためのアプリケーションを作成・登録します。
+
+ECS Service Discoveryで、各ECS Serviceへリクエストが送れていることを確認できるアプリケーションを作成します。
+ここでは、Node.jsを使ったアプリケーションを作成することとします。
+
+作成する2つのECS Serviceに対してリクエストを送り、レスポンスを簡易的に表示できるものです。
+また、ECS Service自身のService名は、環境変数（`SERVICE_NAME`）として渡すこととします。
+
+```js
+const process = require('process');
+const express = require('express');
+const axios = require('axios');
+
+const app = express();
+const port = 80;
+const wrap = (fn) => (...args) => fn(...args).catch(args[2]);
+
+app.get('/', wrap(async (req, res) => {
+  res.send('HELLO WORLD!!');
+}));
+app.get('/request', wrap(async (req, res) => {
+  const resA = await axios.get('http://myservice-a.ecs_service_discovery.local/message');
+  const resB = await axios.get('http://myservice-b.ecs_service_discovery.local/message');
+  res.json({
+    serviceA: resA.data.message,
+    serviceB: resB.data.message,
+  });
+}));
+app.get('/message', wrap(async (req, res) => {
+  res.json({ message: `THIS IS ${process.env.SERVICE_NAME}!!` });
+}));
+app.use((err, req, res, next) => {
+  if (err) {
+    res.status(500);
+    res.send(err.toString());
+  } else {
+    res.send('OK');
+  }
+});
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`);
+});
+process.on('SIGINT', () => {
+  process.exit(0);
+});
+```
+
+作成したアプリケーションのDockerイメージを作成します。
+
+```Dockerfile
+# Dockerfile
+FROM public.ecr.aws/docker/library/node:14
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 80
+CMD [ "node", "index.js" ]
+```
+
+事前にAWSコンソール画面からECR Repositoryを作成し、Dockerイメージを登録します。
+
+```bash
+$ ACCOUNT=$(aws sts get-caller-identity | jq -r .Account)
+$ REGION=ap-northeast-1
+$ aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
+$ docker build --tag ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/ecs_service_discovery:latest ./
+$ docker push ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/ecs_service_discovery:latest
+```
+
+![](ecr-repository.png)
 
 
 ## コンテナサービス構築
 
-TBD
+最後に、コンテナサービスの構築を進めます。
 
+ECS Serviceとして起動させるDockerイメージは、先程ECR Repositoryに登録したイメージを使います。
+このイメージを指定して、ECS Task Difinitionを作成します。
 
+ここでは、ECS Service Discoveryを使うため、各ECS Serviceに対応するDNSレコードが作成されるようにします。
+ECS Serviceは２つ作成し、DNS名を`myservice-a.{app_name}.local`・`myservice-b.{app_name}.local`とします。
 
+```tf
+####################################################
+# ECS Cluster
+####################################################
+
+resource "aws_ecs_cluster" "this" {
+  name = "${local.app_name}"
+  capacity_providers = ["FARGATE"]
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE"
+  }
+  setting {
+    name = "containerInsights"
+    value = "enabled"
+  }
+}
+
+resource "aws_iam_role" "ecs_task_exec" {
+  name = "${local.app_name}-ecs_task_exec"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = { Service = "ecs-tasks.amazonaws.com" }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  ]
+}
+
+####################################################
+# ECS Task Definition
+####################################################
+
+resource "aws_cloudwatch_log_group" "myservice" {
+  name = "${local.app_name}-myservice"
+}
+
+resource "aws_iam_role" "myservice_task" {
+  name = "${local.app_name}-myservice_task"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = { Service = "ecs-tasks.amazonaws.com" }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+  inline_policy {
+    name = "allow_logs"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "logs:CreateLogStream",
+            "logs:DescribeLogGroups",
+            "logs:DescribeLogStreams",
+            "logs:PutLogEvents",
+          ],
+          Resource = "*"
+        }
+      ]
+    })
+  }
+}
+
+resource "aws_ecs_task_definition" "myservice" {
+  for_each = toset(["a", "b"])
+  family = "${local.app_name}-myservice-${each.key}"
+  network_mode = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu = 256
+  memory = 512
+  execution_role_arn = aws_iam_role.ecs_task_exec.arn
+  task_role_arn = aws_iam_role.myservice_task.arn
+  container_definitions = jsonencode([{
+    name = "myservice"
+    image = "${data.aws_caller_identity.this.account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/${local.app_name}:latest"
+    portMappings = [{ containerPort:80 }]
+      environment = [
+        { name = "SERVICE_NAME", value = "myservice-${each.key}" },
+      ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-region: "ap-northeast-1"
+        awslogs-group: aws_cloudwatch_log_group.myservice.name
+        awslogs-stream-prefix: "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_service_discovery_service" "myservice" {
+  for_each = toset(["a", "b"])
+  name = "myservice-${each.key}"
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.this.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl = 10
+      type = "A"
+    }
+    dns_records {
+      ttl = 10
+      type = "SRV"
+    }
+  }
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
+resource "aws_ecs_service" "myservice" {
+  for_each = toset(["a", "b"])
+  name = "${local.app_name}-myservice-${each.key}"
+  cluster = aws_ecs_cluster.this.id
+  platform_version = "LATEST"
+  task_definition = aws_ecs_task_definition.myservice[each.key].arn
+  desired_count = 2
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent = 200
+  propagate_tags = "SERVICE"
+  enable_execute_command = true
+  launch_type = "FARGATE"
+  deployment_circuit_breaker {
+    enable = true
+    rollback = true
+  }
+  network_configuration {
+    assign_public_ip = true
+    subnets = [
+      aws_subnet.public_1.id,
+      aws_subnet.public_2.id,
+    ]
+    security_groups = [
+      aws_security_group.app.id,
+    ]
+  }
+  service_registries {
+    registry_arn = aws_service_discovery_service.myservice[each.key].arn
+    port = 80
+  }
+}
 ```
-aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity | jq -r .Account).dkr.ecr.ap-northeast-1.amazonaws.com
-docker build --tag $(aws sts get-caller-identity | jq -r .Account).dkr.ecr.ap-northeast-1.amazonaws.com/ecs_service_discovery:latest ./
-docker push $(aws sts get-caller-identity | jq -r .Account).dkr.ecr.ap-northeast-1.amazonaws.com/ecs_service_discovery:latest
+
+これで、コンテナサービスの構築は完了です。
+正しく構築できていれば、Hosted Zoneにレコードが追加され、各Serviceと連携できていることが確認できます。
+
+![](ecs-service-discovery.png)
+
+作成したECS TaskのIPアドレスを確認し、curlなどでリクエストを送るとメッセージが取得できていることが確認できます。
+
+```bash
+$ curl -s http://54.248.5.165/request | jq .
+{
+  "serviceA": "THIS IS myservice-a!!",
+  "serviceB": "THIS IS myservice-b!!"
+}
 ```
+
+
+# まとめ
+
+ECS Service Discoveryを使った、ECS Service間連携システムを構築しました。
+
+ECS Serviceに対応するDNSレコードを作成することで、DNS名からECS Serviceに対してリクエストを送れるようにしました。
+これにより、簡単にECS Service間で連携できるようになりました。
+
+システムの規模が大きくなるにつれて、マイクロサービス化する場合は少なくないと思います。
+そのような時に、ECS Service Discoveryを使えば、簡単にマイクロサービス間で連携する基盤が構築できるようになります。
+
+より手軽に大規模なシステムを構築できるよう、しっかりと理解しておきましょう。
