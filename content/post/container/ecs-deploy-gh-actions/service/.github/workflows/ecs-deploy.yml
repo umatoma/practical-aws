@@ -1,0 +1,78 @@
+name: ecs-deploy
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ACCOUNT_ID: 111111111111
+      REGION: ap-northeast-1
+      ACTION_ROLE: ecs_deploy_gh_actions-gh_actions
+      APP_NAME: ecs_deploy_gh_actions
+      SVC_NAME: myservice
+      SVC_COMPOSE_FILE: docker-compose.yml
+      SVC_ECS_PARAMS: ecs-params.yml
+      SVC_CONTAINER_NAME: main
+      SVC_CONTAINER_PORT: 80
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
+          sudo chmod +x /usr/local/bin/ecs-cli
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ env.ACCOUNT_ID }}:role/${{ env.APP_NAME }}-gh_actions
+          aws-region: ${{ env.REGION }}
+      - id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - id: build-image
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.APP_NAME }}-${{ env.SVC_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
+      - id: compose-file
+        run: |
+          sed -e "s|__IMAGE_NAME__|$IMAGE_NAME|g" $COMPOSE_FILE > $OUT_COMPOSE_FILE
+          echo "::set-output name=file::$OUT_COMPOSE_FILE"
+        env:
+          IMAGE_NAME: ${{ steps.build-image.outputs.image }}
+          COMPOSE_FILE: ${{ env.SVC_COMPOSE_FILE }}
+          OUT_COMPOSE_FILE: deploy.docker-compose.yml
+      - id: target-group
+        run: |
+          TARGET_GROUP=$(echo "$APP_NAME-$SVC_NAME" | sed -e "s|_|-|g")
+          TARGET_GROUP_ARN=$(aws elbv2 describe-target-groups --names $TARGET_GROUP | jq ".TargetGroups[0].TargetGroupArn" --raw-output)
+          echo "::set-output name=arn::$TARGET_GROUP_ARN"
+      - run: |
+          ecs-cli configure \
+            --region $REGION \
+            --default-launch-type FARGATE \
+            --cluster $CLUSTER \
+            --config-name $CLUSTER
+        env:
+          CLUSTER: ${{ env.APP_NAME }}
+      - run: |
+          ecs-cli compose \
+            --cluster $CLUSTER \
+            --project-name $PROJECT_NAME \
+            --file $COMPOSE_FILE \
+            --ecs-params $ECS_PARAMS \
+          service up \
+            --target-groups "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=$CONTAINER_PORT" \
+            --tags "application=$APP_NAME" \
+            --create-log-groups \
+            --force-deployment
+        env:
+          CLUSTER: ${{ env.APP_NAME }}
+          PROJECT_NAME: ${{ env.APP_NAME }}-${{ env.SVC_NAME }}
+          COMPOSE_FILE: ${{ steps.compose-file.outputs.file }}
+          ECS_PARAMS: ${{ env.SVC_ECS_PARAMS }}
+          TARGET_GROUP_ARN: ${{ steps.target-group.outputs.arn }}
+          CONTAINER_NAME: ${{ env.SVC_CONTAINER_NAME }}
+          CONTAINER_PORT: ${{ env.SVC_CONTAINER_PORT }}

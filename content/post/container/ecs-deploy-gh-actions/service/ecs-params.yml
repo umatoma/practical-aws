@@ -1,0 +1,17 @@
+version: 1
+task_definition:
+  ecs_network_mode: awsvpc
+  task_execution_role: ecs_deploy_gh_actions-ecs_task_exec
+  task_role_arn: ecs_deploy_gh_actions-myservice_task
+  task_size:
+    cpu_limit: 256
+    mem_limit: 512
+run_params:
+  network_configuration:
+    awsvpc_configuration:
+      subnets:
+        - subnet-0da81e0bd54600e35
+        - subnet-0c6b6e9244654f9dc
+      security_groups:
+        - sg-0f7e24b161d479ad1
+      assign_public_ip: ENABLED

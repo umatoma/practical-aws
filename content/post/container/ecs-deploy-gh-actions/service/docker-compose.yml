@@ -1,0 +1,11 @@
+version: "3"
+services:
+  main:
+    image: __IMAGE_NAME__
+    ports: ["80:80"]
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-northeast-1
+        awslogs-group: /ecs_deploy_gh_actions/myservice
+        awslogs-stream-prefix: ecs
