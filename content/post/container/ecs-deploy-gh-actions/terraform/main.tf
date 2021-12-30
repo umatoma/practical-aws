@@ -278,6 +278,15 @@ resource "aws_lb_listener_rule" "myservice" {
 }
 
 ####################################################
+# ECR Repository
+####################################################
+
+resource "aws_ecr_repository" "myservice" {
+  name = "${local.app_name}-myservice"
+  image_tag_mutability = "MUTABLE"
+}
+
+####################################################
 # GitHub Actions
 ####################################################
 

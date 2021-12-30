@@ -470,7 +470,7 @@ $ curl -s http://54.248.5.165/request | jq .
 ```
 
 
-# まとめ
+## まとめ
 
 ECS Service Discoveryを使った、ECS Service間連携システムを構築しました。
 

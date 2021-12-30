@@ -541,7 +541,7 @@ ECS Service
 ![](ecs-service-index.png)
 
 
-# まとめ
+## まとめ
 
 HTTPSでリクエストを受ける基礎的なWebサーバーのシステムを構築しました。
 
