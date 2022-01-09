@@ -6,6 +6,7 @@ categories: [container]
 tags: [ECS, Terraform]
 image: group-container-ecs-service-discovery-architecture.png
 draft: false
+lastmod: 2022-01-09
 ---
 
 ## 作成するシステム構成
@@ -225,6 +226,28 @@ ECS Service Discoveryで、各ECS Serviceへリクエストが送れているこ
 作成する2つのECS Serviceに対してリクエストを送り、レスポンスを簡易的に表示できるものです。
 また、ECS Service自身のService名は、環境変数（`SERVICE_NAME`）として渡すこととします。
 
+package.json
+
+```json
+{
+    "name": "myservice",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "axios": "^0.24.0",
+      "express": "^4.17.1"
+    }
+  }
+```
+
+index.js
+
 ```js
 const process = require('process');
 const express = require('express');
@@ -265,6 +288,8 @@ process.on('SIGINT', () => {
 ```
 
 作成したアプリケーションのDockerイメージを作成します。
+
+Dockerfile
 
 ```Dockerfile
 # Dockerfile
