@@ -6,6 +6,7 @@ categories: [basic]
 tags: [IAM]
 image: basic-security.jpg
 draft: false
+lastmod: 2022-01-09
 ---
 
 ## セキュリティ基礎
@@ -34,7 +35,7 @@ IAMロールの中には複数のIAMポリシーが含まれていて、それ�
 ![](group-basic-iam.png)
 
 
-### Systems Manager Parameter Store
+## Systems Manager Parameter Store
 
 「Parameter Store」とは、「Systems Manager」のー機能である設定データ管理サービスです。
 パスワード・ライセンスコードなど、任意のデータをKey-Value形式で保存できます。
